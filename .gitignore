@@ -1,0 +1,10 @@
+# Служебные и временные файлы
+__*.html
+*.zip
+*.log
+Thumbs.db
+desktop.ini
+.DS_Store
+.idea/
+.vscode/
+node_modules/

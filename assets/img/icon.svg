@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Росчерк — иконка «Сибирь Проект»</title>
+  <rect width="512" height="512" fill="#0A0A0B"/>
+  <g transform="translate(-40.4000 -33.3800) scale(2.6)">
+    <path d="M112 68 C 80 50 40 66 40 110 C 40 154 80 170 112 158 L140 158 L140 68 L188 68 L188 158" fill="none" stroke="#F5DA96" stroke-width="10.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="112.0000" y="152.7500" width="22.0000" height="10.5000" fill="#E0B54A"/>
+    <rect x="106.0000" y="62.0000" width="12.0000" height="12.0000" fill="#E0B54A"/>
+  </g>
+</svg>

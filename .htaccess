@@ -1,0 +1,35 @@
+# «Сибирь Проект» — статический сайт
+# Настройки для Apache. На Nginx/IIS файл не нужен.
+
+AddDefaultCharset UTF-8
+DirectoryIndex index.html
+
+<IfModule mod_mime.c>
+  AddType image/svg+xml .svg
+  AddType image/webp .webp
+  AddType application/pdf .pdf
+  AddType text/css .css
+  AddType application/javascript .js
+  AddType application/xml .xml
+  AddType text/plain .txt
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain application/javascript application/json application/xml image/svg+xml
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/html "access plus 0 seconds"
+  ExpiresByType text/css "access plus 7 days"
+  ExpiresByType application/javascript "access plus 7 days"
+  ExpiresByType image/svg+xml "access plus 30 days"
+  ExpiresByType image/webp "access plus 30 days"
+  ExpiresByType image/png "access plus 30 days"
+  ExpiresByType image/jpeg "access plus 30 days"
+  ExpiresByType image/x-icon "access plus 30 days"
+  ExpiresByType application/pdf "access plus 7 days"
+</IfModule>
+
+# Аккуратные страницы ошибок, если они появятся
+ErrorDocument 404 /index.html
