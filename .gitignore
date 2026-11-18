@@ -8,3 +8,7 @@ desktop.ini
 .idea/
 .vscode/
 node_modules/
+
+# Chat widget secrets/runtime
+api/config.php
+api/.gigachat_token_cache.json
