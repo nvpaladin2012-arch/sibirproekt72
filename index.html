@@ -825,7 +825,7 @@
     var base = (location.hostname.endsWith("github.io") && location.pathname.indexOf("/sibirproekt72/") === 0) ? "/sibirproekt72" : "";
     window.SIBIRPROEKT_WIDGET_CONFIG = { apiUrl: base + "/api/chat.php" };
     var s = document.createElement("script");
-    s.src = base + "/js/chat-widget.js";
+    s.src = base + "/js/chat-widget.js?v=3";
     s.defer = true;
     document.body.appendChild(s);
   })();
