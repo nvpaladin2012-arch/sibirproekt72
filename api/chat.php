@@ -68,24 +68,30 @@ $SYSTEM_PROMPT = "Ты — виртуальный ИИ-консультант к
 
 Отвечай вежливо, кратко, структурировано (используй списки) и без сложного канцелярита.";
 
-function respond(int $code, array $data): void {
+function respond(int $code, array $data, bool $finish = false): void {
     http_response_code($code);
     echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    exit;
+    if ($finish && function_exists('fastcgi_finish_request')) {
+        @fastcgi_finish_request();
+    } elseif ($finish) {
+        if (function_exists('ob_get_level')) { while (ob_get_level() > 0) { @ob_end_flush(); } }
+        @flush();
+    }
+    if (!$finish) {
+        exit;
+    }
 }
 
 function http_post_form(string $url, array $headers, array $data, bool $verifySsl): array {
     $ch = curl_init($url);
     $headerLines = [];
-    foreach ($headers as $k => $v) {
-        $headerLines[] = $k . ': ' . $v;
-    }
+    foreach ($headers as $k => $v) { $headerLines[] = $k . ': ' . $v; }
     curl_setopt_array($ch, [
         CURLOPT_POST => true,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_HTTPHEADER => $headerLines,
         CURLOPT_POSTFIELDS => http_build_query($data),
-        CURLOPT_TIMEOUT => 15,
+        CURLOPT_TIMEOUT => 20,
         CURLOPT_CONNECTTIMEOUT => 8,
         CURLOPT_SSL_VERIFYPEER => $verifySsl,
         CURLOPT_SSL_VERIFYHOST => $verifySsl ? 2 : 0,
@@ -100,15 +106,13 @@ function http_post_form(string $url, array $headers, array $data, bool $verifySs
 function http_post_json(string $url, array $headers, array $payload, bool $verifySsl): array {
     $ch = curl_init($url);
     $headerLines = [];
-    foreach ($headers as $k => $v) {
-        $headerLines[] = $k . ': ' . $v;
-    }
+    foreach ($headers as $k => $v) { $headerLines[] = $k . ': ' . $v; }
     curl_setopt_array($ch, [
         CURLOPT_POST => true,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_HTTPHEADER => $headerLines,
         CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE),
-        CURLOPT_TIMEOUT => 25,
+        CURLOPT_TIMEOUT => 35,
         CURLOPT_CONNECTTIMEOUT => 8,
         CURLOPT_SSL_VERIFYPEER => $verifySsl,
         CURLOPT_SSL_VERIFYHOST => $verifySsl ? 2 : 0,
@@ -132,32 +136,6 @@ function write_token_cache(string $cacheFile, array $data): void {
     @file_put_contents($cacheFile, json_encode($data, JSON_UNESCAPED_UNICODE), LOCK_EX);
 }
 
-function fetch_access_token(string $oauthUrl, string $authKey, string $scope, bool $verifySsl, string $cacheFile): string {
-    $headers = [
-        'Content-Type' => 'application/x-www-form-urlencoded',
-        'Accept' => 'application/json',
-        'RqUID' => bin2hex(random_bytes(16)),
-        'Authorization' => 'Basic ' . $authKey,
-    ];
-    $res = http_post_form($oauthUrl, $headers, ['scope' => $scope], $verifySsl);
-    if ($res['error'] || $res['status'] < 200 || $res['status'] >= 300) {
-        respond(502, ['error' => 'Failed to obtain access token: ' . ($res['error'] ?: ('HTTP ' . $res['status']))]);
-    }
-    $payload = json_decode($res['body'], true);
-    if (!is_array($payload) || empty($payload['access_token'])) {
-        respond(502, ['error' => 'Invalid OAuth response']);
-    }
-    $token = (string)$payload['access_token'];
-    $expiresAt = time() + 29 * 60;
-    if (isset($payload['expires_at'])) {
-        $exp = (float)$payload['expires_at'];
-        if ($exp > 1000000000000) { $exp = $exp / 1000.0; }
-        if ($exp > 0) { $expiresAt = (int)$exp; }
-    }
-    write_token_cache($cacheFile, ['access_token' => $token, 'expires_at' => $expiresAt]);
-    return $token;
-}
-
 function get_cached_access_token(string $cacheFile): ?string {
     $cache = read_token_cache($cacheFile);
     if (is_array($cache) && !empty($cache['access_token'])) {
@@ -169,8 +147,42 @@ function get_cached_access_token(string $cacheFile): ?string {
     return null;
 }
 
-function refresh_access_token(string $oauthUrl, string $authKey, string $scope, bool $verifySsl, string $cacheFile): string {
-    return fetch_access_token($oauthUrl, $authKey, $scope, $verifySsl, $cacheFile);
+function token_expires_soon(string $cacheFile, int $marginSec = 600): bool {
+    $cache = read_token_cache($cacheFile);
+    if (!is_array($cache) || empty($cache['access_token'])) return true;
+    $expiresAt = (int)($cache['expires_at'] ?? 0);
+    return time() >= ($expiresAt - $marginSec);
+}
+
+function refresh_access_token_bg(string $oauthUrl, string $authKey, string $scope, bool $verifySsl, string $cacheFile): void {
+    $lockFile = $cacheFile . '.lock';
+    $fp = @fopen($lockFile, 'c');
+    if ($fp && !@flock($fp, LOCK_EX | LOCK_NB)) { @fclose($fp); return; }
+    try {
+        $cache = read_token_cache($cacheFile);
+        $expiresAt = is_array($cache) ? (int)($cache['expires_at'] ?? 0) : 0;
+        if ($expiresAt > time() + 600) return;
+        $headers = [
+            'Content-Type' => 'application/x-www-form-urlencoded',
+            'Accept' => 'application/json',
+            'RqUID' => bin2hex(random_bytes(16)),
+            'Authorization' => 'Basic ' . $authKey,
+        ];
+        $res = http_post_form($oauthUrl, $headers, ['scope' => $scope], $verifySsl);
+        if ($res['error'] || $res['status'] < 200 || $res['status'] >= 300) return;
+        $payload = json_decode($res['body'], true);
+        if (!is_array($payload) || empty($payload['access_token'])) return;
+        $token = (string)$payload['access_token'];
+        $newExp = time() + 29 * 60;
+        if (isset($payload['expires_at'])) {
+            $exp = (float)$payload['expires_at'];
+            if ($exp > 1000000000000) { $exp = $exp / 1000.0; }
+            if ($exp > 0) { $newExp = (int)$exp; }
+        }
+        write_token_cache($cacheFile, ['access_token' => $token, 'expires_at' => $newExp]);
+    } finally {
+        if ($fp) { @flock($fp, LOCK_UN); @fclose($fp); }
+    }
 }
 
 if ($authKey === '' || $authKey === 'PASTE_YOUR_AUTHORIZATION_KEY_HERE') {
@@ -206,10 +218,7 @@ $messages[] = ['role' => 'user', 'content' => $message];
 
 $token = get_cached_access_token($cacheFile);
 if ($token === null) {
-    // Обновляем токен отдельным шагом, чтобы не объединять OAuth + чат в один длинный запрос
-    // (на shared-хостинге это может привести к таймауту прокси). Клиент автоматически повторит запрос.
-    refresh_access_token($OAUTH_URL, $authKey, $scope, $verifySsl, $cacheFile);
-    respond(503, ['error' => 'Token refreshed, retry', 'retry' => true]);
+    respond(503, ['error' => 'Token expired, retry', 'retry' => true, 'need_refresh' => true]);
 }
 
 $payload = [
@@ -226,8 +235,7 @@ $res = http_post_json($CHAT_URL, [
 
 if ($res['status'] === 401) {
     @unlink($cacheFile);
-    refresh_access_token($OAUTH_URL, $authKey, $scope, $verifySsl, $cacheFile);
-    respond(503, ['error' => 'Token refreshed, retry', 'retry' => true]);
+    respond(503, ['error' => 'Unauthorized, retry', 'retry' => true, 'need_refresh' => true]);
 }
 
 if ($res['error'] || $res['status'] < 200 || $res['status'] >= 300) {
@@ -240,4 +248,10 @@ if (!is_string($answer) || trim($answer) === '') {
     respond(502, ['error' => 'Unexpected response from GigaChat']);
 }
 
-respond(200, ['answer' => trim($answer)]);
+$shouldProactiveRefresh = token_expires_soon($cacheFile, 600);
+respond(200, ['answer' => trim($answer)], $shouldProactiveRefresh);
+if ($shouldProactiveRefresh) {
+    ignore_user_abort(true);
+    @set_time_limit(40);
+    refresh_access_token_bg($OAUTH_URL, $authKey, $scope, $verifySsl, $cacheFile);
+}
