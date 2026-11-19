@@ -85,8 +85,8 @@ function http_post_form(string $url, array $headers, array $data, bool $verifySs
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_HTTPHEADER => $headerLines,
         CURLOPT_POSTFIELDS => http_build_query($data),
-        CURLOPT_TIMEOUT => 30,
-        CURLOPT_CONNECTTIMEOUT => 10,
+        CURLOPT_TIMEOUT => 15,
+        CURLOPT_CONNECTTIMEOUT => 8,
         CURLOPT_SSL_VERIFYPEER => $verifySsl,
         CURLOPT_SSL_VERIFYHOST => $verifySsl ? 2 : 0,
     ]);
@@ -108,8 +108,8 @@ function http_post_json(string $url, array $headers, array $payload, bool $verif
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_HTTPHEADER => $headerLines,
         CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE),
-        CURLOPT_TIMEOUT => 60,
-        CURLOPT_CONNECTTIMEOUT => 10,
+        CURLOPT_TIMEOUT => 25,
+        CURLOPT_CONNECTTIMEOUT => 8,
         CURLOPT_SSL_VERIFYPEER => $verifySsl,
         CURLOPT_SSL_VERIFYHOST => $verifySsl ? 2 : 0,
     ]);
@@ -141,7 +141,7 @@ function fetch_access_token(string $oauthUrl, string $authKey, string $scope, bo
     ];
     $res = http_post_form($oauthUrl, $headers, ['scope' => $scope], $verifySsl);
     if ($res['error'] || $res['status'] < 200 || $res['status'] >= 300) {
-        respond(502, ['error' => 'Failed to obtain access token']);
+        respond(502, ['error' => 'Failed to obtain access token: ' . ($res['error'] ?: ('HTTP ' . $res['status']))]);
     }
     $payload = json_decode($res['body'], true);
     if (!is_array($payload) || empty($payload['access_token'])) {
@@ -158,7 +158,7 @@ function fetch_access_token(string $oauthUrl, string $authKey, string $scope, bo
     return $token;
 }
 
-function get_access_token(string $oauthUrl, string $authKey, string $scope, bool $verifySsl, string $cacheFile): string {
+function get_cached_access_token(string $cacheFile): ?string {
     $cache = read_token_cache($cacheFile);
     if (is_array($cache) && !empty($cache['access_token'])) {
         $expiresAt = (int)($cache['expires_at'] ?? 0);
@@ -166,6 +166,10 @@ function get_access_token(string $oauthUrl, string $authKey, string $scope, bool
             return (string)$cache['access_token'];
         }
     }
+    return null;
+}
+
+function refresh_access_token(string $oauthUrl, string $authKey, string $scope, bool $verifySsl, string $cacheFile): string {
     return fetch_access_token($oauthUrl, $authKey, $scope, $verifySsl, $cacheFile);
 }
 
@@ -200,7 +204,14 @@ $messages = [['role' => 'system', 'content' => $SYSTEM_PROMPT]];
 foreach ($safeHistory as $m) { $messages[] = $m; }
 $messages[] = ['role' => 'user', 'content' => $message];
 
-$token = get_access_token($OAUTH_URL, $authKey, $scope, $verifySsl, $cacheFile);
+$token = get_cached_access_token($cacheFile);
+if ($token === null) {
+    // Обновляем токен отдельным шагом, чтобы не объединять OAuth + чат в один длинный запрос
+    // (на shared-хостинге это может привести к таймауту прокси). Клиент автоматически повторит запрос.
+    refresh_access_token($OAUTH_URL, $authKey, $scope, $verifySsl, $cacheFile);
+    respond(503, ['error' => 'Token refreshed, retry', 'retry' => true]);
+}
+
 $payload = [
     'model' => $model,
     'messages' => $messages,
@@ -215,16 +226,12 @@ $res = http_post_json($CHAT_URL, [
 
 if ($res['status'] === 401) {
     @unlink($cacheFile);
-    $token = get_access_token($OAUTH_URL, $authKey, $scope, $verifySsl, $cacheFile);
-    $res = http_post_json($CHAT_URL, [
-        'Content-Type' => 'application/json',
-        'Accept' => 'application/json',
-        'Authorization' => 'Bearer ' . $token,
-    ], $payload, $verifySsl);
+    refresh_access_token($OAUTH_URL, $authKey, $scope, $verifySsl, $cacheFile);
+    respond(503, ['error' => 'Token refreshed, retry', 'retry' => true]);
 }
 
 if ($res['error'] || $res['status'] < 200 || $res['status'] >= 300) {
-    respond(502, ['error' => 'GigaChat API request failed']);
+    respond(502, ['error' => 'GigaChat API request failed: ' . ($res['error'] ?: ('HTTP ' . $res['status']))]);
 }
 
 $data = json_decode($res['body'], true);
