@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow,noarchive">
   <title>Панель оператора — Сибирь Проект</title>
-  <link rel="stylesheet" href="/css/operator.css?v=20261124-5">
+  <link rel="stylesheet" href="/css/operator.css?v=20261124-6">
 </head>
 <body>
   <div class="app">
@@ -42,7 +42,7 @@
       <main class="card panel">
         <div class="chat-head">
           <div class="title" id="chatTitle">Выберите посетителя</div>
-          <div class="sub" id="chatSub">Слева отображаются посетители, которые сейчас на сайте. Можно отправить приглашение или подключиться к диалогу.</div>
+          <div class="sub" id="chatSub">Слева — посетители, которые сейчас на сайте. Быстрые фразы и проверка орфографии доступны сразу.</div>
           <div class="actions">
             <button id="inviteBtn" class="btn ghost small" type="button" disabled>Пригласить в чат</button>
             <button id="takeoverBtn" class="btn ghost small" type="button" disabled>Подключиться к диалогу</button>
@@ -59,7 +59,7 @@
         <div class="composer">
           <textarea id="replyInput" placeholder="Ответ посетителю... Enter — отправить, Shift+Enter — новая строка" disabled></textarea>
           <div class="row">
-            <span class="hint" id="composerHint">Подключитесь к диалогу, чтобы отвечать как оператор.</span>
+            <span class="hint" id="composerHint">Готовьте ответ и проверяйте орфографию. Для отправки выберите посетителя слева.</span>
             <button id="spellBtn" class="btn ghost small" type="button" disabled>Проверить орфографию</button>
             <button id="sendBtn" class="btn primary small" type="button" disabled>Отправить</button>
           </div>
@@ -84,6 +84,6 @@
     // Рабочий сайт: API живого чата на том же домене.
     window.SIBIRPROEKT_LIVE_API = "/api/live.php";
   </script>
-  <script src="/js/operator.js?v=20261124-5"></script>
+  <script src="/js/operator.js?v=20261124-6"></script>
 </body>
 </html>
