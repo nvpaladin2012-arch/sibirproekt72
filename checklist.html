@@ -7,7 +7,9 @@
 <meta name="description" content="PDF-чек-лист из 12 пунктов для участника закупок по 44-ФЗ, 223-ФЗ и 615-ПП: документы, обеспечение, сроки и типичные ошибки.">
 <meta name="robots" content="noindex, follow">
 <link rel="icon" href="favicon.ico" sizes="any">
-<link href="https://fonts.googleapis.com/css2?family=Tenor+Sans&family=Oswald:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Tenor+Sans&family=Oswald:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tenor+Sans&family=Oswald:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tenor+Sans&family=Oswald:wght@400;500;600&display=swap"></noscript>
 <style>
   :root {
     --ink: #111827;
@@ -181,6 +183,8 @@
     margin: 0 auto 24px;
     text-align: center;
   }
+  .download { display:grid; gap:12px; justify-items:center; }
+  .download__row { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; }
   .download a {
     display: inline-block;
     padding: 13px 28px;
@@ -192,6 +196,22 @@
     letter-spacing: .06em;
     text-transform: uppercase;
     text-decoration: none;
+  }
+  .download .btn-alt {
+    background: #fff;
+    color: #111827;
+    border: 1px solid #d7dbe3;
+    font-family: "Tenor Sans", Arial, sans-serif;
+    font-size: 10.5pt;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .download .btn-wa { background:#22c55e; color:#062a12; border-color:#22c55e; }
+  .download .btn-tg { background:#229ED9; color:#fff; border-color:#229ED9; }
+  .download__hint { margin:0; max-width: 170mm; color:#4b5563; font-size:10.5pt; line-height:1.45; }
+  @media screen and (max-width: 820px) {
+    .download__row { flex-direction:column; width:100%; }
+    .download__row a { width:100%; text-align:center; }
   }
   @media print {
     body { background: #fff; font-size: 11.5pt; }
@@ -216,8 +236,19 @@
 </style>
 </head>
 <body>
-<p class="screen-hint">Это печатная версия чек-листа. Нажмите кнопку ниже, чтобы скачать PDF.</p>
-<div class="download"><a href="assets/files/checklist-pered-tenderom.pdf" download>Скачать PDF</a></div>
+<p class="screen-hint">Это печатная версия чек-листа. Скачайте PDF в один клик — без регистрации и почты.</p>
+<div class="download">
+  <p class="download__hint"><b>Проверьте заявку до подачи: чек-лист от юристов по 44-ФЗ и 223-ФЗ</b><br>Собрали 12 критических точек, из-за которых отклоняют даже опытных поставщиков: от ошибок в структурированной заявке в ЕИС и МЧД до нестыковок в тексте независимой гарантии.</p>
+  <div class="download__row">
+    <a href="assets/files/Check-list-pered-tenderom-Sibir-Proekt.pdf" download>Скачать PDF-чек-лист (без регистрации и почты)</a>
+  </div>
+  <p class="download__hint">Файл откроется сразу в браузере. Мы не запрашиваем ваши контакты.</p>
+  <div class="download__row">
+    <a class="btn-wa" href="https://wa.me/79224770534?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21%20%D0%9F%D1%80%D0%B8%D1%88%D0%BB%D0%B8%D1%82%D0%B5%2C%20%D0%BF%D0%BE%D0%B6%D0%B0%D0%BB%D1%83%D0%B9%D1%81%D1%82%D0%B0%2C%20%D1%87%D0%B5%D0%BA-%D0%BB%D0%B8%D1%81%D1%82%20%D0%BF%D0%B5%D1%80%D0%B5%D0%B4%20%D1%82%D0%B5%D0%BD%D0%B4%D0%B5%D1%80%D0%BE%D0%BC%20%28https%3A//sibirproekt72.ru/checklist.html%29" target="_blank" rel="noopener">Получить в WhatsApp</a>
+    <a class="btn-tg" href="https://t.me/share/url?url=https%3A//sibirproekt72.ru/assets/files/Check-list-pered-tenderom-Sibir-Proekt.pdf&text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21%20%D0%9F%D1%80%D0%B8%D1%88%D0%BB%D0%B8%D1%82%D0%B5%2C%20%D0%BF%D0%BE%D0%B6%D0%B0%D0%BB%D1%83%D0%B9%D1%81%D1%82%D0%B0%2C%20%D1%87%D0%B5%D0%BA-%D0%BB%D0%B8%D1%81%D1%82%20%D0%BF%D0%B5%D1%80%D0%B5%D0%B4%20%D1%82%D0%B5%D0%BD%D0%B4%D0%B5%D1%80%D0%BE%D0%BC" target="_blank" rel="noopener">Написать в Telegram</a>
+    <a class="btn-alt" href="mailto:sibir-proekt72@mail.ru?subject=%D0%A7%D0%B5%D0%BA-%D0%BB%D0%B8%D1%81%D1%82%20%D0%BF%D0%B5%D1%80%D0%B5%D0%B4%20%D1%82%D0%B5%D0%BD%D0%B4%D0%B5%D1%80%D0%BE%D0%BC&body=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5!%20%D0%9F%D1%80%D0%B8%D1%88%D0%BB%D0%B8%D1%82%D0%B5%2C%20%D0%BF%D0%BE%D0%B6%D0%B0%D0%BB%D1%83%D0%B9%D1%81%D1%82%D0%B0%2C%20%D1%87%D0%B5%D0%BA-%D0%BB%D0%B8%D1%81%D1%82%20%D0%BF%D0%B5%D1%80%D0%B5%D0%B4%20%D1%82%D0%B5%D0%BD%D0%B4%D0%B5%D1%80%D0%BE%D0%BC.">Запросить на почту</a>
+  </div>
+</div>
 
 <main class="sheet">
   <div class="top">
@@ -232,7 +263,7 @@
     </div>
   </div>
 
-  <h1>Проверь себя<br>перед тендером</h1>
+  <h1>Проверьте заявку<br>до подачи</h1>
   <p class="lead">Чек-лист из 12 пунктов для участника закупок по <b>44-ФЗ</b>, <b>223-ФЗ</b> и <b>615-ПП</b>. Пройдитесь по нему перед подачей заявки — это поможет избежать типичных ошибок и отклонений.</p>
 
   <div class="intro">Отмечайте пункты по мере проверки. Если хотя бы один вызывает сомнение — лучше уточнить до подачи, чем исправлять последствия после протокола.</div>
@@ -245,7 +276,7 @@
     <li><b>Собрали учредительные документы</b><span>Выписка из ЕГРЮЛ/ЕГРИП, устав, решения, доверенности — в актуальной версии.</span></li>
     <li><b>Проверили ЭЦП и аккредитацию на ЭТП</b><span>Сертификат действует, доступ к площадке есть, настройки рабочего места корректны.</span></li>
     <li><b>Рассчитали обеспечение</b><span>Размер обеспечения заявки и контракта, вид гарантии, срок и банк-партнёр.</span></li>
-    <li><b>Подготовили Форму 2 и техпредложение</b><span>Характеристики товара соответствуют документации, нет отклонений и разночтений.</span></li>
+    <li><b>Подготовили структурированную заявку в ЕИС (технические характеристики товара)</b><span>Характеристики товара соответствуют документации и инструкции, нет отклонений и разночтений.</span></li>
     <li><b>Проверили сертификаты и декларации</b><span>Документы действуют на дату поставки и относятся к предлагаемому товару.</span></li>
     <li><b>Сверили реквизиты и суммы</b><span>ИНН, КПП, банковские данные, цена и НДС совпадают во всех документах.</span></li>
     <li><b>Проверили комплектность и подпись</b><span>Все файлы загружены, формат верный, электронная подпись читается площадкой.</span></li>
@@ -265,7 +296,26 @@
     </div>
   </div>
 
-  <p class="disclaimer">Материал носит информационный характер и не является юридической консультацией. Актуальные требования проверяйте в документации закупки и нормативных актах. © 2026 ИП Вискалин Роман Николаевич · ИНН 860304554480 · ОГРНИП 326723200099737</p>
+  <p class="disclaimer">Материал носит информационный характер и не является юридической консультацией. Актуальные требования проверяйте в документации закупки и нормативных актах. Информация, размещённая на сайте, носит справочный характер и не является публичной офертой, определяемой положениями статьи 437 ГК РФ. Точная стоимость услуг фиксируется в договоре. © 2026 ИП Вискалин Роман Николаевич · ИНН 860304554480 · ОГРНИП 326723200099737</p>
 </main>
+
+<!-- AI chat widget -->
+<script>
+  (function () {
+    var base = (location.hostname.endsWith("github.io") && location.pathname.indexOf("/sibirproekt72/") === 0) ? "/sibirproekt72" : "";
+    window.SIBIRPROEKT_WIDGET_CONFIG = { apiUrl: base + "/api/chat.php" };
+    function loadChatWidget() {
+      if (window.__spwLoadStarted) return;
+      window.__spwLoadStarted = true;
+      var s = document.createElement("script");
+      s.src = base + "/js/chat-widget.js?v=20261124-2";
+      s.defer = true;
+      document.body.appendChild(s);
+    }
+    window.SibirProektLoadChatWidget = loadChatWidget;
+    if (window.requestIdleCallback) window.requestIdleCallback(loadChatWidget, { timeout: 3000 });
+    else window.setTimeout(loadChatWidget, 1500);
+  })();
+</script>
 </body>
 </html>

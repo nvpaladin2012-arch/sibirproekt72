@@ -70,16 +70,21 @@
       body.style.maxHeight = open ? body.scrollHeight + 'px' : '0px';
     }
     Array.prototype.forEach.call(acc.querySelectorAll('.acc__item'), function (item) {
+      var head = item.querySelector('.acc__head');
       setBody(item, item.classList.contains('is-open'));
-      item.querySelector('.acc__head').addEventListener('click', function () {
+      head.setAttribute('aria-expanded', item.classList.contains('is-open') ? 'true' : 'false');
+      head.addEventListener('click', function () {
         var willOpen = !item.classList.contains('is-open');
         Array.prototype.forEach.call(acc.querySelectorAll('.acc__item'), function (other) {
           other.classList.remove('is-open');
           setBody(other, false);
+          var otherHead = other.querySelector('.acc__head');
+          if (otherHead) otherHead.setAttribute('aria-expanded', 'false');
         });
         if (willOpen) {
           item.classList.add('is-open');
           setBody(item, true);
+          head.setAttribute('aria-expanded', 'true');
         }
       });
     });
@@ -90,252 +95,127 @@
     });
   }
 
-  /* ---------- Калькулятор стоимости ---------- */
-  var calcForm = document.getElementById('calcForm');
-  if (calcForm) {
-    var cService = document.getElementById('calcService');
-    var cLaw = document.getElementById('calcLaw');
-    var cGType = document.getElementById('calcGType');
-    var cSum = document.getElementById('calcSum');
-    var cEndDate = document.getElementById('calcEndDate');
-    var cDays = document.getElementById('calcDays');
-    var cDateError = document.getElementById('calcDateError');
-    var cPrice = document.getElementById('calcPrice');
-    var cBest = document.getElementById('calcBest');
-    var cTerm = document.getElementById('calcTerm');
-    var cSumView = document.getElementById('calcSumView');
-    var cInc = document.getElementById('calcInc');
-    var cCopy = document.getElementById('calcCopy');
-    var lastCalc = null;
-
-    var DAY_MS = 86400000;
-
-    var fmtNum = function (n) {
-      return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0');
-    };
-    var rub = function (n) { return fmtNum(n) + '\u00a0₽'; };
-    var num = function (el, fallback) {
-      var v = parseInt(el && el.value, 10);
-      return isFinite(v) && v >= 0 ? v : (fallback || 0);
-    };
-
-    function startOfToday() {
-      var d = new Date();
-      d.setHours(0, 0, 0, 0);
-      return d;
-    }
-    function addDays(date, days) {
-      var d = new Date(date.getTime());
-      d.setDate(d.getDate() + days);
-      return d;
-    }
-    function isoDate(d) {
-      var m = d.getMonth() + 1;
-      var day = d.getDate();
-      return d.getFullYear() + '-' + (m < 10 ? '0' + m : m) + '-' + (day < 10 ? '0' + day : day);
-    }
-    function parseDateInput(value) {
-      if (!value) return null;
-      var parts = value.split('-');
-      if (parts.length !== 3) return null;
-      var d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-      if (isNaN(d.getTime())) return null;
-      d.setHours(0, 0, 0, 0);
-      return d;
-    }
-    function formatDateRu(d) {
-      var m = d.getMonth() + 1;
-      var day = d.getDate();
-      return (day < 10 ? '0' + day : day) + '.' + (m < 10 ? '0' + m : m) + '.' + d.getFullYear();
-    }
-    function pluralDays(n) {
-      var mod10 = n % 10;
-      var mod100 = n % 100;
-      if (mod10 === 1 && mod100 !== 11) return 'день';
-      if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return 'дня';
-      return 'дней';
-    }
-
-    var lawLabel = {
-      '44fz': 'Госзакупки (44-ФЗ / 223-ФЗ)',
-      comm: 'Коммерческий контракт'
-    };
-    var gTypeLabel = {
-      execution: 'На исполнение контракта',
-      tender: 'На участие (тендерная)',
-      warranty: 'Гарантийные обязательства'
-    };
-
-    /* Тарифная сетка №1: доступна только для госзакупок,
-       кроме гарантийных обязательств и в пределах лимитов. */
-    function calcGrid1(amount, days, law, type) {
-      if (law !== '44fz') return null;
-      if (type === 'warranty') return null;
-
-      var rate = 0;
-      var minFee = 0;
-
-      if (type === 'execution') {
-        if (amount > 30000000 || days > 540) return null;
-        rate = 2.3;
-        if (amount <= 50000) {
-          if (days <= 90) minFee = 1440;
-          else if (days <= 180) minFee = 1800;
-          else if (days <= 365) minFee = 2400;
-          else minFee = 3000;
-        } else if (amount <= 100000) {
-          if (days <= 90) minFee = 1680;
-          else if (days <= 180) minFee = 2160;
-          else if (days <= 365) minFee = 2640;
-          else minFee = 3600;
-        } else if (amount <= 10000000) {
-          minFee = 2400;
-        } else {
-          minFee = 30000;
-        }
-      } else if (type === 'tender') {
-        if (amount > 5000000 || days > 150) return null;
-        rate = 2.1;
-        if (amount <= 50000) minFee = 1080;
-        else if (amount <= 500000) minFee = 1320;
-        else if (amount <= 2000000) minFee = 2400;
-        else minFee = 5000;
-      } else {
-        return null;
-      }
-
-      var calculated = amount * (rate / 100) * (days / 365);
-      return { price: Math.max(calculated, minFee) };
-    }
-
-    /* Тарифная сетка №2: доступна для всех типов закупок. */
-    function calcGrid2(amount, days, law, type) {
-      var rate = 0;
-      var minFee = (law === '44fz') ? 2000 : 3000;
-
-      if (law === '44fz') {
-        if (type === 'execution') rate = 2.3;
-        else if (type === 'tender') rate = 2.1;
-        else if (type === 'warranty') rate = (days <= 1155) ? 2.31 : 5.25;
-      } else {
-        if (type === 'execution' || type === 'tender') rate = 3.5;
-        else if (type === 'warranty') rate = (days <= 1155) ? 3.5 : 5.25;
-      }
-
-      var calculated = amount * (rate / 100) * (days / 365);
-      return { price: Math.max(calculated, minFee) };
-    }
-
-    function bestPrice(amount, days, law, type) {
-      var grid1 = calcGrid1(amount, days, law, type);
-      var grid2 = calcGrid2(amount, days, law, type);
-      var best = grid2.price;
-      if (grid1 !== null && grid1.price < best) best = grid1.price;
-      return best;
-    }
-
-    function calcIncludes() {
-      return [
-        'Подбор банка-партнёра под вашу задачу',
-        'Проверка документов и расчёт тарифа',
-        'Согласование проекта гарантии с заказчиком',
-        'Выпуск гарантии в электронном виде'
-      ];
-    }
-
-    function recalc() {
-      var service = cService.value;
-      var law = cLaw.value;
-      var type = cGType.value;
-      var s = num(cSum, 0);
-      var end = parseDateInput(cEndDate.value);
-      var today = startOfToday();
-      var days = end ? Math.round((end.getTime() - today.getTime()) / DAY_MS) : 0;
-      var dateInvalid = !!end && days <= 0;
-      var dateOk = !!end && !dateInvalid;
-      var valid = dateOk && s >= 1000;
-      var price = valid ? bestPrice(s, days, law, type) : 0;
-      var includes = calcIncludes();
-
-      if (cDateError) cDateError.hidden = !dateInvalid;
-      if (cEndDate) {
-        cEndDate.classList.toggle('is-invalid', dateInvalid);
-        cEndDate.setAttribute('aria-invalid', dateInvalid ? 'true' : 'false');
-      }
-
-      cPrice.textContent = valid ? rub(price) : '—';
-      cBest.hidden = !valid;
-      cTerm.textContent = dateOk ? '1 рабочий день · ' + days + ' ' + pluralDays(days) : '—';
-      cSumView.textContent = s ? rub(s) : '—';
-      cDays.textContent = dateOk ? days + ' ' + pluralDays(days) : '—';
-
-      var html = '';
-      for (var i = 0; i < includes.length; i++) {
-        html += '<li>' + includes[i] + '</li>';
-      }
-      cInc.innerHTML = html;
-
-      lastCalc = {
-        service: service,
-        sum: s,
-        days: days,
-        end: end,
-        law: law,
-        type: type,
-        price: price,
-        mailBody: ''
-      };
-
-      if (valid) {
-        var lines = ['Здравствуйте! Прошу уточнить стоимость и условия.', '', 'Услуга: Независимые (банковские) гарантии'];
-        lines.push('Тип закупки: ' + lawLabel[law]);
-        lines.push('Вид гарантии: ' + gTypeLabel[type]);
-        lines.push('Сумма гарантии: ' + rub(s));
-        lines.push('Дата окончания гарантии: ' + formatDateRu(end) + ' (' + days + ' ' + pluralDays(days) + ')');
-        lines.push('Предварительный расчёт: ' + rub(price));
-        lines.push('Срок выпуска: 1 рабочий день');
-        lines.push('', 'Расчёт с сайта sibirproekt72.ru');
-        lastCalc.mailBody = lines.join('\n');
-      }
-
-      if (cCopy) cCopy.disabled = !valid;
-    }
-
-    // min — завтрашняя дата, по умолчанию — через год
-    var today = startOfToday();
-    if (cEndDate) {
-      cEndDate.min = isoDate(addDays(today, 1));
-      cEndDate.value = isoDate(addDays(today, 365));
-    }
-
-    cService.addEventListener('change', recalc);
-    cLaw.addEventListener('change', recalc);
-    cGType.addEventListener('change', recalc);
-    cSum.addEventListener('input', recalc);
-    if (cEndDate) {
-      cEndDate.addEventListener('input', recalc);
-      cEndDate.addEventListener('change', recalc);
-    }
-
-    if (cCopy) cCopy.addEventListener('click', function () {
-      if (!lastCalc || !lastCalc.mailBody) return;
-      var text = lastCalc.mailBody;
-      var done = function () {
-        var old = cCopy.textContent;
-        cCopy.textContent = 'Скопировано ✓';
-        setTimeout(function () { cCopy.textContent = old; }, 2200);
-        spTrack('calculator_lead', { service: lastCalc.service, value: Math.round(lastCalc.price), method: 'copy' });
-      };
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(done, function () {
-          if (window.prompt) window.prompt('Скопируйте расчёт:', text);
-        });
-      } else if (window.prompt) {
-        window.prompt('Скопируйте расчёт:', text);
-      }
+  /* ---------- Аккордеон услуг на мобильных ---------- */
+  var solutionCards = document.querySelectorAll('.solution');
+  if (solutionCards.length) {
+    var mobileAccordion = window.matchMedia('(max-width:768px)');
+    Array.prototype.forEach.call(solutionCards, function (card) {
+      var toggle = card.querySelector('.solution__toggle');
+      card.addEventListener('click', function (e) {
+        if (!mobileAccordion.matches) return;
+        if (e.target.closest('a')) return;
+        var willOpen = !card.classList.contains('is-open');
+        card.classList.toggle('is-open', willOpen);
+        if (toggle) toggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+      });
     });
+    window.addEventListener('resize', function () {
+      if (mobileAccordion.matches) return;
+      Array.prototype.forEach.call(solutionCards, function (card) {
+        card.classList.remove('is-open');
+        var toggle = card.querySelector('.solution__toggle');
+        if (toggle) toggle.setAttribute('aria-expanded', 'false');
+      });
+    });
+  }
 
-    recalc();
+  /* ---------- Микроконверсии GA4: PDF, телефон, чат ---------- */
+  var spChatSeen = {};
+  function spEvent(name, params) {
+    var p = params || {};
+    if (p.event_category === undefined) p.event_category = 'microconversion';
+    spTrack(name, p);
+  }
+  function placementOf(el) {
+    var s = el.closest && el.closest('section, footer, header, .stickybar, .exitpop');
+    if (!s) return 'unknown';
+    return s.id || (s.className && s.className.toString().split(' ')[0]) || 'unknown';
+  }
+
+  /* Скачивание PDF-чек-листа (включая ссылки из exit-popup) и tel:-ссылки */
+  document.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest && e.target.closest('a[href]');
+    if (!a) return;
+    var href = a.getAttribute('href') || '';
+    if (/\.pdf(\?|$)/i.test(href)) {
+      spEvent('file_download', {
+        file_name: (href.split('/').pop() || 'checklist.pdf').split('?')[0],
+        file_extension: 'pdf',
+        link_url: href,
+        event_category: 'content',
+        event_label: placementOf(a)
+      });
+    } else if (/^tel:/i.test(href)) {
+      spEvent('phone_click', {
+        phone: href.replace(/^tel:/i, ''),
+        event_category: 'contact',
+        event_label: placementOf(a)
+      });
+    }
+  }, true);
+
+  /* «Скопировать номер»: статические кнопки + кнопка в липкой панели */
+  function copyPhone(btn) {
+    var phone = btn.getAttribute('data-phone') || '+79224770534';
+    var human = phone.replace(/^\+7(\d{3})(\d{3})(\d{2})(\d{2})$/, '8 ($1) $2-$3-$4') || phone;
+    var done = function () {
+      var label = btn.querySelector('span');
+      btn.classList.add('is-copied');
+      if (label) label.textContent = 'Скопировано ✓';
+      setTimeout(function () {
+        btn.classList.remove('is-copied');
+        if (label) label.textContent = btn.getAttribute('data-label') || 'Скопировать номер';
+      }, 2200);
+      spEvent('phone_copy', {
+        phone: phone, value: 1, event_category: 'contact', event_label: placementOf(btn)
+      });
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(human).then(done, function () {
+        if (window.prompt) window.prompt('Телефон:', human);
+      });
+    } else if (window.prompt) {
+      window.prompt('Телефон:', human);
+    }
+  }
+  document.addEventListener('click', function (e) {
+    var btn = e.target && e.target.closest && e.target.closest('[data-phone-copy]');
+    if (btn) { e.preventDefault(); copyPhone(btn); }
+  });
+
+  (function injectStickyCopy() {
+    var actions = document.querySelector('.stickybar__actions');
+    if (!actions || actions.querySelector('[data-phone-copy]')) return;
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'stickybar__btn stickybar__btn--copy';
+    btn.setAttribute('data-phone-copy', '');
+    btn.setAttribute('data-phone', '+79224770534');
+    btn.setAttribute('data-label', 'Скопировать 8 (922) 477-05-34');
+    btn.setAttribute('aria-label', 'Скопировать номер телефона 8 (922) 477-05-34');
+    btn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span><b>Скопировать</b> <small>8 (922) 477-05-34</small></span>';
+    actions.appendChild(btn);
+  })();
+
+  /* Клики по анонимному чату: CTA + лаунчер виджета (один раз с места за сессию) */
+  document.addEventListener('click', function (e) {
+    var btn = e.target && e.target.closest && e.target.closest('[data-chat-open], .spw-launcher');
+    if (!btn) return;
+    var place = placementOf(btn);
+    var method = btn.hasAttribute('data-chat-open') ? 'cta' : 'launcher';
+    var key = place + ':' + method;
+    if (spChatSeen[key]) return;
+    spChatSeen[key] = 1;
+    spEvent('chat_open', { method: method, event_category: 'contact', event_label: place });
+  }, true);
+
+  /* ---------- Бегущая строка: не анимируем вне экрана ---------- */
+  var ticker = document.querySelector('.ticker');
+  if (ticker && typeof IntersectionObserver === 'function') {
+    var tickerIO = new IntersectionObserver(function (entries) {
+      ticker.classList.toggle('is-paused', !entries[0].isIntersecting);
+    }, { threshold: 0 });
+    tickerIO.observe(ticker);
   }
 
   /* ---------- Важные новости: разворачивание «Подробнее» ---------- */
@@ -430,31 +310,12 @@
     }
   }
 
-  /* ---------- Счётчики ---------- */
-  function animateCounter(el) {
-    var target = parseInt(el.getAttribute('data-count'), 10) || 0;
-    var prefix = el.getAttribute('data-prefix') || '';
-    var suffix = el.getAttribute('data-suffix') || '';
-    var dur = 1200;
-    var start = null;
-    function tick(ts) {
-      if (!start) start = ts;
-      var p = Math.min((ts - start) / dur, 1);
-      var eased = 1 - Math.pow(1 - p, 3);
-      el.textContent = prefix + Math.round(target * eased) + suffix;
-      if (p < 1) requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
-    setTimeout(function () { el.textContent = prefix + target + suffix; }, dur + 300);
-  }
-
   /* ---------- Плавное появление блоков ---------- */
   Array.prototype.forEach.call(document.querySelectorAll('.reveal[data-delay]'), function (el) {
     el.style.setProperty('--d', (parseInt(el.getAttribute('data-delay'), 10) || 0) * 130 + 'ms');
   });
 
   var pending = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
-  var countersLeft = Array.prototype.slice.call(document.querySelectorAll('[data-count]'));
 
   function sweep() {
     var limit = window.innerHeight - 60;
@@ -471,17 +332,9 @@
       }
       return true;
     });
-
-    countersLeft = countersLeft.filter(function (el) {
-      if (el.getBoundingClientRect().top < limit) {
-        animateCounter(el);
-        return false;
-      }
-      return true;
-    });
   }
   function onSweepScroll() {
-    if (pending.length || countersLeft.length) sweep();
+    if (pending.length) sweep();
   }
   window.addEventListener('scroll', onSweepScroll, { passive: true });
   window.addEventListener('resize', onSweepScroll);
@@ -511,14 +364,15 @@
 
   /* ---------- Пыль на канве (живой фон) ---------- */
   var canvas = document.getElementById('dust');
-  if (canvas && !reduced) {
+  var lowPower = window.matchMedia('(max-width: 768px), (pointer: coarse)').matches;
+  if (canvas && !reduced && !lowPower) {
     var ctx = canvas.getContext('2d');
     var W = 0, H = 0, parts = [], rafId = null;
 
     function resize() {
       W = canvas.width = window.innerWidth;
       H = canvas.height = window.innerHeight;
-      var count = Math.min(70, Math.round(W / 22));
+      var count = Math.min(45, Math.round(W / 30));
       parts = [];
       for (var i = 0; i < count; i++) {
         parts.push({
@@ -595,17 +449,38 @@
   /* ---------- Липкая панель CTA ---------- */
   var stickybar = document.getElementById('stickybar');
   var hero = document.getElementById('hero');
+  var mobileSticky = window.matchMedia('(max-width:768px)');
   function updateStickybar() {
     if (!stickybar) return;
     var pastHero = hero ? window.scrollY > hero.offsetHeight * 0.7 : window.scrollY > 320;
     var nearFooter = (window.innerHeight + window.scrollY) > (docEl.scrollHeight - 40);
-    var show = pastHero && !nearFooter;
+    var show = mobileSticky.matches ? true : (pastHero && !nearFooter);
     stickybar.classList.toggle('is-visible', show);
     document.body.classList.toggle('has-stickybar', show);
   }
   window.addEventListener('scroll', updateStickybar, { passive: true });
   window.addEventListener('resize', updateStickybar);
+  if (mobileSticky.addEventListener) mobileSticky.addEventListener('change', updateStickybar);
   updateStickybar();
+
+  /* Кнопка «Анонимный чат» в нижней панели */
+  var chatOpenButtons = document.querySelectorAll('[data-chat-open]');
+  if (chatOpenButtons.length) {
+    var chatOpenTries = 0;
+    function openChatWidget() {
+      if (typeof window.SibirProektLoadChatWidget === 'function') window.SibirProektLoadChatWidget();
+      if (typeof window.SibirProektGigaChatWidgetOpen === 'function') {
+        window.SibirProektGigaChatWidgetOpen();
+        return;
+      }
+      var launcher = document.querySelector('.spw-launcher');
+      if (launcher) { launcher.click(); return; }
+      if (chatOpenTries++ < 20) window.setTimeout(openChatWidget, 250);
+    }
+    Array.prototype.forEach.call(chatOpenButtons, function (btn) {
+      btn.addEventListener('click', openChatWidget);
+    });
+  }
 
   /* ---------- Карусель отзывов ---------- */
   var revViewport = document.getElementById('revViewport');
@@ -699,6 +574,240 @@
     }
     revReset();
   }
+
+  /* ---------- Exit-intent popup: 4 сценария, сегментация и триггеры ---------- */
+  (function () {
+    var KEY_SHOWN = 'sp-exit-shown';
+    var KEY_CALC = 'sp-exit-calc-seen';
+    var KEY_INDEX = 'sp-exit-index';
+    var KEY_CHOICE = 'sp-exit-choice';
+    var ARM_DELAY = 18000;
+
+    var path = window.location.pathname || '';
+    var prefix = /\/(uslugi|news|articles)\//.test(path) ? '../' : '';
+    var checklist = prefix + 'assets/files/Check-list-pered-tenderom-Sibir-Proekt.pdf';
+    var urgentPage = /(zashchita-fas|bankovskie-garantii|rnp-kak-ne-popast|nezavisimaya-garantiya-bez-otkaza|uderzhanie-bankovskoy-garantii|kommercheskie-bankovskie-garantii)/i.test(path);
+
+    var variants = [
+      {
+        title: 'Подождите! Проверьте заявку на 12 критических ошибок перед подачей',
+        text: 'Скачайте бесплатный PDF-чек-лист от юристов по 44-ФЗ и 223-ФЗ. Файл откроется сразу в браузере — без регистрации, почты и звонков.',
+        primary: { label: 'Скачать PDF-чек-лист бесплатно', href: checklist, target: '_blank', rel: 'noopener' },
+        secondary: { label: 'Нет, спасибо, я уверен в своей заявке', action: 'close' }
+      },
+      {
+        title: 'Сомневаетесь в расчётах или боитесь отклонения?',
+        text: 'Скиньте номер закупки в наш анонимный чат. Юрист бесплатно оценит риски, проверит ТЗ или подберёт банк для гарантии. Мы не спрашиваем телефон и имя.',
+        primary: { label: 'Написать в анонимный чат', action: 'chat', prefill: 'Здравствуйте! Хочу анонимно проверить закупку и оценить риски отклонения. Номер закупки: ' },
+        secondary: { label: 'Закрыть, мне не нужна проверка', action: 'close' }
+      },
+      {
+        title: 'Горят сроки по контракту или отклонили заявку?',
+        text: 'Не рискуйте попаданием в РНП. Выпустим банковскую гарантию от 4 часов или подготовим жалобу в УФАС за 1 день.',
+        primary: { label: 'Получить срочную консультацию', action: 'chat', prefill: 'Здравствуйте! Горят сроки по контракту / отклонили заявку. Нужна срочная консультация: ' },
+        secondary: { label: 'У меня всё под контролем', action: 'close' }
+      },
+      {
+        title: 'Нашли гарантию дешевле? Сделаем скидку!',
+        text: 'Покажите расчёт конкурента в анонимном чате — согласуем с банком-партнёром более выгодный тариф без передачи ваших контактов.',
+        primary: { label: 'Запросить скидку в чате', action: 'chat', prefill: 'Здравствуйте! Хочу запросить более выгодный тариф по банковской гарантии. Расчёт конкурента: ' },
+        secondary: { label: 'Мне не нужно выгоднее.', action: 'close' }
+      }
+    ];
+
+    function storeGet(key, session) {
+      try { return (session ? window.sessionStorage : window.localStorage).getItem(key); } catch (e) { return null; }
+    }
+    function storeSet(key, value, session) {
+      try { (session ? window.sessionStorage : window.localStorage).setItem(key, value); } catch (e) {}
+    }
+    function calcSeen() {
+      return storeGet(KEY_CALC, true) === '1' || /#calculator/i.test(window.location.hash || '');
+    }
+    function checkCalc() {
+      var el = document.getElementById('calculator');
+      if (el && el.getBoundingClientRect().top < window.innerHeight * 0.6) storeSet(KEY_CALC, '1', true);
+    }
+    window.addEventListener('scroll', checkCalc, { passive: true });
+    window.addEventListener('resize', checkCalc);
+    checkCalc();
+
+    function queryParam(name) {
+      var m = new RegExp('[?&]' + name + '=([^&]+)').exec(window.location.search || '');
+      return m ? decodeURIComponent(m[1]) : null;
+    }
+    var debugMode = /[?&]exitpopup=1(?:&|$)/.test(window.location.search);
+    var forced = parseInt(queryParam('variant'), 10);
+    forced = forced >= 1 && forced <= variants.length ? forced - 1 : null;
+
+    if (!debugMode && storeGet(KEY_SHOWN, true) === '1') return;
+
+    var overlay = null;
+    var closeButton = null;
+    var armed = false;
+    var backSentinel = null;
+    var chatLaunchClicked = false;
+    var index = 0;
+
+    function selectIndex() {
+      if (forced !== null) return forced;
+      if (calcSeen()) return 3;
+      if (urgentPage) return 2;
+      var allowed = [0, 1];
+      var previous = parseInt(storeGet(KEY_INDEX) === null ? '-1' : storeGet(KEY_INDEX), 10);
+      if (isNaN(previous) || allowed.indexOf(previous) === -1) return allowed[0];
+      return allowed[(allowed.indexOf(previous) + 1) % allowed.length];
+    }
+
+    function clearBackSentinel() {
+      if (!backSentinel) return;
+      backSentinel = null;
+      try { window.history.replaceState({ spExitHandled: 1 }, ''); } catch (e) {}
+    }
+
+    function armBack() {
+      if (!window.history || !window.history.pushState) return;
+      try {
+        backSentinel = 'sp-exit-' + Date.now();
+        window.history.pushState({ spExitBack: backSentinel }, '');
+        window.addEventListener('popstate', function onPop(e) {
+          if (!backSentinel || !e.state || e.state.spExitBack !== backSentinel) return;
+          window.removeEventListener('popstate', onPop);
+          backSentinel = null;
+          openPopup();
+        });
+      } catch (e) { backSentinel = null; }
+    }
+
+    function openChatWithPrefill(text, attempt) {
+      attempt = attempt || 0;
+      if (typeof window.SibirProektLoadChatWidget === 'function') window.SibirProektLoadChatWidget();
+      if (typeof window.SibirProektGigaChatWidgetPrefill === 'function') {
+        window.SibirProektGigaChatWidgetPrefill(text);
+        return;
+      }
+      var launcher = document.querySelector('.spw-launcher');
+      if (launcher && !chatLaunchClicked) { chatLaunchClicked = true; launcher.click(); }
+      if (attempt < 20) window.setTimeout(function () { openChatWithPrefill(text, attempt + 1); }, 250);
+    }
+
+    function remember(n, action) {
+      storeSet(KEY_CHOICE, n + ':' + action);
+      spTrack('exit_intent_choice', { variant: n + 1, action: action });
+    }
+
+    function onKeydown(e) {
+      if (e.key === 'Escape') {
+        remember(index, 'escape');
+        closePopup();
+      }
+    }
+
+    function closePopup() {
+      if (!overlay) return;
+      overlay.hidden = true;
+      document.body.classList.remove('exitpop-open');
+      document.removeEventListener('keydown', onKeydown);
+    }
+
+    function openPopup() {
+      if (overlay || (!debugMode && storeGet(KEY_SHOWN, true) === '1')) return;
+      index = selectIndex();
+      var item = variants[index];
+      var segment = forced !== null ? 'debug' : (calcSeen() ? 'calculator' : (urgentPage ? 'urgent' : 'default'));
+      clearBackSentinel();
+
+      overlay = document.createElement('div');
+      overlay.className = 'exitpop';
+      overlay.setAttribute('role', 'dialog');
+      overlay.setAttribute('aria-modal', 'true');
+      overlay.setAttribute('aria-labelledby', 'exitpopTitle');
+      overlay.hidden = true;
+      overlay.innerHTML =
+        '<div class="exitpop__backdrop" data-exit-close></div>' +
+        '<div class="exitpop__card">' +
+          '<button class="exitpop__close" type="button" data-exit-close aria-label="Закрыть окно">&times;</button>' +
+          '<span class="exitpop__brand">Сибирь Проект</span>' +
+          '<h2 class="exitpop__title" id="exitpopTitle"></h2>' +
+          '<p class="exitpop__text"></p>' +
+          '<div class="exitpop__actions"></div>' +
+        '</div>';
+      document.body.appendChild(overlay);
+      overlay.querySelector('.exitpop__title').textContent = item.title;
+      overlay.querySelector('.exitpop__text').textContent = item.text;
+
+      var actions = overlay.querySelector('.exitpop__actions');
+      [item.primary, item.secondary].forEach(function (cfg, i) {
+        var action = i === 0 ? 'primary' : 'secondary';
+        var el;
+        if (cfg.action === 'close' || cfg.action === 'chat') {
+          el = document.createElement('button');
+          el.type = 'button';
+          if (cfg.action === 'chat') el.setAttribute('data-chat-open', '');
+          el.addEventListener('click', function () {
+            remember(index, action);
+            closePopup();
+            if (cfg.action === 'chat') openChatWithPrefill(cfg.prefill);
+          });
+        } else {
+          el = document.createElement('a');
+          el.href = cfg.href;
+          if (cfg.target) el.target = cfg.target;
+          if (cfg.rel) el.rel = cfg.rel;
+          el.addEventListener('click', function () { remember(index, action); closePopup(); });
+        }
+        el.className = 'exitpop__btn ' + (i === 0 ? 'exitpop__btn--primary' : 'exitpop__btn--secondary');
+        el.textContent = cfg.label;
+        actions.appendChild(el);
+      });
+
+      overlay.addEventListener('click', function (e) {
+        if (e.target.hasAttribute('data-exit-close')) { remember(index, 'close'); closePopup(); }
+      });
+      closeButton = overlay.querySelector('.exitpop__close');
+      document.addEventListener('keydown', onKeydown);
+
+      storeSet(KEY_SHOWN, '1', true);
+      storeSet(KEY_INDEX, String(index));
+      overlay.hidden = false;
+      document.body.classList.add('exitpop-open');
+      spTrack('exit_intent_shown', { variant: index + 1, segment: segment });
+      closeButton.focus();
+    }
+
+    function arm() {
+      if (armed) return;
+      armed = true;
+      var touchY = 0;
+      var touchT = 0;
+      document.addEventListener('mouseout', function (e) {
+        if (!e.relatedTarget && e.clientY <= 0) openPopup();
+      });
+      document.addEventListener('mouseleave', function (e) {
+        if (!e.relatedTarget && e.clientY <= 0) openPopup();
+      });
+      document.addEventListener('touchstart', function (e) {
+        if (!e.touches[0]) return;
+        touchY = e.touches[0].clientY;
+        touchT = Date.now();
+      }, { passive: true });
+      document.addEventListener('touchmove', function (e) {
+        var t = e.touches[0];
+        if (!t) return;
+        var dy = t.clientY - touchY;
+        var dt = Date.now() - touchT;
+        if (dy > 70 && dt > 0 && dy / dt > 0.45 && window.scrollY <= 80 && t.clientY > 90) {
+          touchY = t.clientY;
+          touchT = Date.now();
+          openPopup();
+        }
+      }, { passive: true });
+      armBack();
+    }
+
+    window.setTimeout(arm, ARM_DELAY);
+    if (debugMode) window.setTimeout(openPopup, 400);
+  })();
 
   /* ---------- Информер о cookie (без сбора данных) ---------- */
   var cookiebar = document.getElementById('cookiebar');

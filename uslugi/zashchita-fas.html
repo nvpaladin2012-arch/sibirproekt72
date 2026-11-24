@@ -22,8 +22,10 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Tenor+Sans&family=Oswald:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../css/style.css?v=20261114-6">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Tenor+Sans&family=Oswald:wght@300;400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tenor+Sans&family=Oswald:wght@300;400;500;600;700&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tenor+Sans&family=Oswald:wght@300;400;500;600;700&display=swap"></noscript>
+<link rel="stylesheet" href="../css/style.css?v=20261124-2">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-8BYMKVZHGT"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -186,7 +188,7 @@
       <div class="page-hero__stats"><div><b>индивидуально</b><span>по каждой закупке</span></div><div><b>1–3 дня</b><span>срок подачи</span></div><div><b>44/223-ФЗ</b><span>жалобы и защита</span></div></div>
       <div class="page-hero__actions">
         <a class="btn" href="../index.html#calculator">Рассчитать стоимость</a>
-        <a class="btn btn--ghost" href="tel:+79224770534">Позвонить: 8 (922) 477-05-34</a>
+        <a class="btn btn--ghost btn--call" href="tel:+79224770534"><span>Позвоните руководителю</span><b>8 (922) 477-05-34</b></a>
       </div>
     </div>
   </section>
@@ -258,7 +260,7 @@
         <h2>Обсудим вашу задачу?</h2>
         <p>Позвоните или отправьте документы — проверим, назовём стоимость и срок, предложим решение.</p>
         <div class="svc-cta__actions">
-          <a class="btn btn--xl" href="tel:+79224770534">Позвонить: 8 (922) 477-05-34</a>
+          <button class="btn btn--xl btn--ghost" type="button" data-chat-open><span>Бесплатный аудит закупки</span><b>в анонимном чате</b></button>
           <a class="btn btn--xl btn--ghost" href="mailto:sibir-proekt72@mail.ru?subject=Защита%20интересов%20в%20ФАС">Написать на почту</a>
         </div>
       </div>
@@ -290,7 +292,7 @@
     </div>
 
     <div class="footer__col">
-      <h4>Услуги</h4>
+      <h3>Услуги</h3>
       <ul>
         <li><a href="tendernoe-soprovozhdenie.html">Тендерное сопровождение</a></li>
         <li><a href="bankovskie-garantii.html">Независимые (банковские) гарантии</a></li>
@@ -302,7 +304,7 @@
     </div>
 
     <div class="footer__col">
-      <h4>Компания</h4>
+      <h3>Компания</h3>
       <ul>
         <li><a href="../index.html">Главная</a></li>
         <li><a href="../about.html">О компании</a></li>
@@ -315,7 +317,7 @@
     </div>
 
     <div class="footer__col">
-      <h4>Контакты</h4>
+      <h3>Контакты</h3>
       <ul class="footer__contacts">
         <li>г. Тюмень, ул. Республики, д. 143, офис 602/1</li>
         <li><a href="tel:+79224770534">+7 (922) 477-05-34</a></li>
@@ -335,21 +337,21 @@
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.4 8-8 9-4.6-1-8-4-8-9V6z"/><path d="M9 12.2l2.2 2.2L15.5 10"/></svg>
         Официальный статус
       </span>
-      <span class="legal__id" aria-label="ИП Вискалин Роман Николаевич · ИНН 860304554480 · ОГРНИП 326723200099737"><span aria-hidden="true">ИП&nbsp;Вискалин Роман Николаевич</span><span aria-hidden="true">ИНН&nbsp;860304554480</span><span aria-hidden="true">ОГРНИП&nbsp;326723200099737</span></span>
+      <span class="legal__id" role="img" aria-label="ИП Вискалин Роман Николаевич · ИНН 860304554480 · ОГРНИП 326723200099737"><span aria-hidden="true">ИП&nbsp;Вискалин Роман Николаевич</span><span aria-hidden="true">ИНН&nbsp;860304554480</span><span aria-hidden="true">ОГРНИП&nbsp;326723200099737</span></span>
     </div>
   </div>
 
   <div class="footer__bottom">
     <div class="container">
-      <span>© 2026 Индивидуальный предприниматель Вискалин Роман Николаевич</span>
-      <span>ИНН 860304554480 · ОГРНИП 326723200099737</span>
+      <span>© 2026 ИП Вискалин Роман Николаевич · ИНН 860304554480 · ОГРНИП 326723200099737</span>
+      <p class="footer__disclaimer" style="margin:8px 0 0;font-size:12px;line-height:1.5;opacity:.85;">Информация, размещённая на сайте, носит справочный характер и не является публичной офертой, определяемой положениями статьи 437 ГК РФ. Точная стоимость услуг фиксируется в договоре.</p>
     </div>
   </div>
 </footer>
 
 <!-- ===== ИНФОРМЕР О COOKIE ===== -->
 <div class="cookiebar" id="cookiebar" role="region" aria-label="Сведения о файлах cookie" hidden>
-  <p class="cookiebar__text">На сайте нет рекламных и аналитических <span lang="en">cookie</span>. Онлайн-чат анонимный: не нужно указывать имя, телефон или почту — просто напишите в чат или позвоните.</p>
+  <p class="cookiebar__text">На сайте нет форм регистрации, а анонимный чат не запрашивает имя, телефон и почту. Для статистики посещений используется Google Analytics 4.</p>
   <button class="cookiebar__btn" id="cookiebarOk" type="button">Понятно</button>
 </div>
 
@@ -361,14 +363,38 @@
       <i>Пн–Пт 09:00–18:00 (МСК+2) · Сб–Вс выходные дни · Вся Россия</i>
     </div>
     <div class="stickybar__actions">
-      <a class="stickybar__phone" href="tel:+79224770534">8 (922) 477-05-34</a>
+      <a class="stickybar__btn stickybar__btn--call" href="tel:+79224770534">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 16.9v2a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 1.1 3.2 2 2 0 0 1 3.1 1h2a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L7.1 8.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>
+        <span><b>Позвонить</b><small>8 (922) 477-05-34</small></span>
+      </a>
+      <button class="stickybar__btn stickybar__btn--chat" type="button" data-chat-open>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-8 8H5l-2 2V12a9 9 0 1 1 18 0z"/><path d="M8 10h8M8 14h5"/></svg>
+        <span><b>Анонимный чат</b><small>на собственном сервере</small></span>
+      </button>
     </div>
   </div>
 </div>
 
-<script src="../js/main.js?v=20261114-6"></script>
-<!-- Анонимный онлайн-чат (Jivo): посетитель не указывает имя, телефон и почту -->
-<script src="//code.jivo.ru/widget/XKZld2AI5z" async></script>
+<script defer src="../js/main.js?v=20261124-2"></script>
+
+<!-- AI chat widget -->
+<script>
+  (function () {
+    var base = (location.hostname.endsWith("github.io") && location.pathname.indexOf("/sibirproekt72/") === 0) ? "/sibirproekt72" : "";
+    window.SIBIRPROEKT_WIDGET_CONFIG = { apiUrl: base + "/api/chat.php" };
+    function loadChatWidget() {
+      if (window.__spwLoadStarted) return;
+      window.__spwLoadStarted = true;
+      var s = document.createElement("script");
+      s.src = base + "/js/chat-widget.js?v=20261124-2";
+      s.defer = true;
+      document.body.appendChild(s);
+    }
+    window.SibirProektLoadChatWidget = loadChatWidget;
+    if (window.requestIdleCallback) window.requestIdleCallback(loadChatWidget, { timeout: 3000 });
+    else window.setTimeout(loadChatWidget, 1500);
+  })();
+</script>
 </body>
 </html>
 

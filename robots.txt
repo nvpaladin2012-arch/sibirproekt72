@@ -1,7 +1,18 @@
+# «Сибирь Проект» — https://sibirproekt72.ru/
+# Все посадочные страницы услуг открыты для индексации:
+#   44-ФЗ / 223-ФЗ / 615-ПП -> /uslugi/bankovskie-garantii.html
+#   ЭЦП / МЧД                -> /uslugi/ecp.html
+#   жалобы в ФАС             -> /uslugi/zashchita-fas.html
+#   КИК, факторинг, сопровождение -> /uslugi/*.html
+
 User-agent: *
 Allow: /
+# Защита от дублей: технические query-параметры (в т.ч. ?exitpopup=1)
+# не должны попадать в индекс как отдельные страницы.
+# Сам калькулятор не меняет URL — его состояние хранится только в DOM.
+Disallow: /*?
 
-# Генеративные ИИ-поисковики (GEO)
+# Генеративные ИИ-поисковики (GEO): разрешаем обход и цитирование материалов
 User-agent: GPTBot
 Allow: /
 
@@ -11,12 +22,6 @@ Allow: /
 User-agent: ChatGPT-User
 Allow: /
 
-User-agent: ClaudeBot
-Allow: /
-
-User-agent: Claude-User
-Allow: /
-
 User-agent: PerplexityBot
 Allow: /
 
@@ -24,6 +29,12 @@ User-agent: Perplexity-User
 Allow: /
 
 User-agent: Google-Extended
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-User
 Allow: /
 
 User-agent: Applebot-Extended

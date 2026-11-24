@@ -7,18 +7,21 @@
 - `index.html` — главная: услуги, калькулятор независимых (банковских) гарантий, FAQ, контакты
 - `about.html` — о компании, принципы работы, слово руководителя
 - `uslugi/` — каталог услуг и 6 отдельных страниц
-- `news/` — новости (6 материалов)
-- `articles/` — полезные статьи (4 материала)
+- `news/` — новости (7 материалов)
+- `articles/` — полезные статьи (5 материалов)
 - `checklist.html` — экранная версия чек-листа (noindex)
-- `css/style.css`, `js/main.js` — стили и скрипты
+- `css/style.css`, `js/main.js`, `js/calculator.js` — стили и скрипты (калькулятор только на главной)
 - `assets/` — изображения, логотипы, PDF-чек-лист
 - `llms.txt`, `sitemap.xml`, `robots.txt` — служебные файлы для поисковиков и ИИ-агентов
+- `SEO-GA4-SETUP.md` — инструкция по GA4-микроконверсиям, GSC и проверкам
 
 ## Публикация
 
-Сайт размещён на GitHub Pages: **https://nvpaladin2012-arch.github.io/sibirproekt72/**
+Сайт размещён на хостинге Hostland: **https://sibirproekt72.ru/**
 
 Рабочий (канонический) домен: **https://sibirproekt72.ru/**
+Старый адрес GitHub Pages `https://nvpaladin2012-arch.github.io/sibirproekt72/`
+больше не используется: Telegram-бот берёт данные о компании с домена Hostland.
 
 ## Контакты
 
